@@ -77,6 +77,7 @@ void doubleToFloatSimple(const double &value)
 	
 }
 
+
 void doubleToFloat(const double &value)
 {
 	dataFloat dataF;
@@ -98,7 +99,7 @@ void doubleToFloat(const double &value)
 
 	if(bitsD.none()) // ZERO
 	{
-		for(int i = 0; i < 31; i++)
+		for(int i = 0; i < 30; i++)
 			bitsF[i] = 0;
 	}
 	else if(bitsED.all() || bitsED.none()) // infinity or NaN or denormalized
@@ -147,6 +148,69 @@ void doubleToFloat(const double &value)
 }
 
 
+void floatToDouble(const float &value)
+{
+	dataFloat dataF;
+	dataDouble dataD;
+	dataF.output = value;
+
+	std::bitset<sizeof(float) * CHAR_BIT> bitsF(dataF.input);
+	std::bitset<sizeof(double) * CHAR_BIT> bitsD;
+	std::bitset<8> bitsEF;
+
+	printFloat(bitsF);
+
+	bitsD[63] = bitsF[31];	
+
+	for(int i = 0; i < 8; i ++)
+		bitsEF[i] = bitsF[23 + i];
+	
+	bitsF[31] = 0; // simplify zero check
+
+	if(bitsF.none()) // ZERO
+	{
+		for(int i = 0; i < 31; i++)
+			bitsD[i] = 0;
+	}
+	else if(bitsEF.all() || bitsEF.none()) // Infinity or NaN or Denormalized
+	{
+		int infAndNanOrDenorm = bitsEF.all() ? 1 : 0;
+
+		for(int i = 0; i < 11; i++)
+			bitsD[52 + i] = infAndNanOrDenorm;
+
+		for(int i = 0; i < 23; i++) 
+			bitsD[51-i] = bitsF[22-i];
+
+		// fills in the rest of the fraction
+		for(int i = 0; i < 29; i++)
+			bitsD[28 - i] = 0;
+		
+	}
+	else{
+		int negativeOrPositive = bitsEF[7] == 1 ? 1 : 0;
+			
+		bitsD[62] = bitsEF[7];
+		for(int i = 0; i < 3; i++)
+			bitsD[61 - i] = !negativeOrPositive;
+		
+		for(int i = 0; i < 7; i++)
+			bitsD[58 - i] = bitsEF[6 - i];
+		
+		for(int i = 0; i < 23; i++) 
+			bitsD[51-i] = bitsF[22-i];
+
+		for(int i = 0; i < 29; i++)
+			bitsD[28 - i] = 0;
+	}
+	
+	//printDouble(bitsD);
+
+	dataD.output = bitsD.to_ulong();
+	std::cout << ((value == dataD.input) ? "True" : "False")  << std::endl;
+	//std::cout << std::setprecision(20) << value << std::endl << dataD.input << std::endl << std::endl;
+}
+
 int main()
 {
     // std::cout << std::endl;
@@ -166,5 +230,17 @@ int main()
     doubleToFloat(3.40282346639e-100);
     doubleToFloat(std::numeric_limits<float>::infinity());
     doubleToFloat(std::numeric_limits<double>::infinity());
+    doubleToFloat(-std::numeric_limits<float>::infinity());
 
+    // floatToDouble(0.0);
+    // floatToDouble(1.0);
+    // floatToDouble(5.0);
+    // floatToDouble(-1.5);
+    // floatToDouble(-2.25125);
+    // floatToDouble(1.175494350822287508e-38); // min(float)
+    // floatToDouble(2.35098870164e-38); // next value greater than min(float)  
+    // floatToDouble(std::numeric_limits<float>::min());
+    // floatToDouble(std::numeric_limits<float>::max());
+    // floatToDouble(std::numeric_limits<float>::infinity());
+    // floatToDouble(-std::numeric_limits<float>::infinity());
 }
