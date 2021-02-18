@@ -1,3 +1,5 @@
 # transprecision-cpp
 
-A program to convert 64 to 32 and 32 to 64 floating point IEEE representations
+A program to convert IEEE 754 floating point: 
+- 64 to 32 bits
+- 32 to 64 bits
